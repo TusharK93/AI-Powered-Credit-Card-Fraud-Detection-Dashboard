@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir "mlflow[auth]==2.22.4" "psycopg2-binary>=2.9"
+RUN pip install --no-cache-dir "sqlalchemy==2.0.41" "mlflow[auth]==2.22.4" "psycopg2-binary>=2.9"
+RUN python -c "import sqlalchemy; print('SQLAlchemy version:', sqlalchemy.__version__)"
 
 COPY mlflow_server/entrypoint.sh /app/entrypoint.sh
 
