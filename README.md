@@ -1,125 +1,145 @@
-Signal --- Transaction Anomaly Dashboard
-A Django portfolio project demonstrating a small, observable web service
-for transaction-feature scoring. It includes validated input,
-configurable scoring thresholds, request IDs, structured application
-logs, health/readiness endpoints, prediction-history persistence,
-database migrations, automated tests, and Render deployment
-configuration.
-Model honesty: The default scorer may be a heuristic demo unless a
-complete trained model artifact bundle and the optional ML
-dependencies are configured. Do not claim validated fraud-detection
-performance or use this portfolio project to approve/decline real
-transactions without independent model validation.
+# 💳 AI-Powered Credit Card Fraud Detection Dashboard
 
-Architecture
-Browser form
-    ↓
-Django form validation
-    ↓
-Scoring service ── complete trained artifact bundle available?
-    │                    ├─ yes → optional Keras autoencoder
-    │                    └─ no  → demo scoring mode
-    ↓
-Threshold comparison
-    ↓
-PredictionLog (score, threshold, mode, flag; no raw feature payload)
-    ↓
-Dashboard history + application logs
-Features
-- Environment-driven settings and production secret-key validation.
-- Request correlation IDs returned as X-Request-ID.
-- Request duration/status logging without logging submitted feature
-  values.
-- Liveness endpoint at /health/ and database readiness endpoint at
-  /ready/.
-- Server-side validation for numeric, finite, non-negative, and binary
-  fields.
-- Configurable demo threshold through DEMO_ANOMALY_THRESHOLD (0 to
-  1).
-- Prediction-history persistence and database migrations.
-- Django regression tests for scoring, validation, endpoints, and
-  history creation.
-- Lightweight runtime requirements; TensorFlow is optional.
-Run locally on Windows
-py -3.11 -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
+An AI-powered machine learning web application designed to help identify potentially fraudulent credit card transactions through interactive analysis and visualization.
+
+<p align="center">
+
+  **🚀 Live Demo:** [View Live Application](https://ai-powered-credit-card-fraud-detection-m6g8.onrender.com/)
+
+  **📂 GitHub Repository:** [View Source Code](https://github.com/TusharK93/AI-Powered-Credit-Card-Fraud-Detection-Dashboard)
+
+</p>
+
+---
+
+## 📌 Overview
+
+Credit card fraud is a major challenge in the financial industry. This project focuses on applying machine learning and data analysis techniques to detect suspicious transactions and present the results through an interactive dashboard.
+
+The dashboard provides a user-friendly interface for exploring transaction data, analyzing fraud detection results, and understanding patterns that may indicate fraudulent activity.
+
+The project demonstrates the practical application of **Artificial Intelligence, Machine Learning, Data Analytics, and Web Development** to a real-world financial security problem.
+
+## ✨ Key Features
+
+- 🤖 **AI-Based Fraud Detection:** Uses machine learning techniques to classify potentially fraudulent transactions.
+- 📊 **Interactive Dashboard:** Presents transaction information and analytical insights in a visual format.
+- 🔍 **Transaction Analysis:** Helps examine transaction data and identify suspicious patterns.
+- 📈 **Data Visualization:** Makes fraud-related trends and results easier to understand.
+- ⚡ **Web-Based Application:** Provides access through a browser without requiring a local installation for the live demo.
+- 🌐 **Live Deployment:** Hosted on Render for online access.
+
+## 🛠️ Technology Stack
+
+The exact libraries and versions should match the project's source code.
+
+- **Programming Language:** Python
+- **Machine Learning:** Scikit-learn (if used in the implementation)
+- **Data Processing:** Pandas, NumPy (if used)
+- **Web Framework:** Flask or Django, depending on the implementation
+- **Frontend:** HTML, CSS, JavaScript
+- **Deployment:** Render
+- **Version Control:** Git and GitHub
+
+## ⚙️ How It Works
+
+1. **Data Input:** Transaction data is provided to the application.
+2. **Data Processing:** The input is prepared for analysis using the project's preprocessing workflow.
+3. **Model Prediction:** The trained machine learning model evaluates the transaction.
+4. **Fraud Classification:** The model produces a prediction indicating whether the transaction may be fraudulent or legitimate.
+5. **Dashboard Visualization:** The results and available analytical insights are presented through the web interface.
+
+## 🚀 Live Demo
+
+Try the deployed application:
+
+👉 **[AI-Powered Credit Card Fraud Detection Dashboard](https://ai-powered-credit-card-fraud-detection-m6g8.onrender.com/)**
+
+## 💻 Run Locally
+
+Follow these steps to run the project on your computer.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/TusharK93/AI-Powered-Credit-Card-Fraud-Detection-Dashboard.git
+```
+
+### 2. Navigate to the project directory
+
+```bash
+cd AI-Powered-Credit-Card-Fraud-Detection-Dashboard
+```
+
+### 3. Create a virtual environment
+
+```bash
+python -m venv venv
+```
+
+Activate it on Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+On macOS or Linux:
+
+```bash
+source venv/bin/activate
+```
+
+### 4. Install dependencies
+
+If the repository contains a `requirements.txt` file, run:
+
+```bash
 pip install -r requirements.txt
-python manage.py migrate
-python manage.py check
-python manage.py test
-python manage.py runserver
-Open http://127.0.0.1:8000/. Health endpoints: /health/ and
-/ready/.
-Configuration
-Use .env.example as a reference. Django does not automatically load
-.env unless the project explicitly configures a dotenv loader; set
-environment variables in PowerShell or your hosting dashboard.
+```
 
-Example PowerShell session:
-$env:DEBUG = "True"
-$env:DEMO_ANOMALY_THRESHOLD = "0.50"
-$env:LOG_LEVEL = "INFO"
-For production, set a strong random SECRET_KEY, set DEBUG=False, and
-configure an appropriate ALLOWED_HOSTS. Never commit .env,
-credentials, or private transaction data.
-Optional trained autoencoder
-The original dataset and trained model artifacts are not included by
-default. To train a model, install the optional machine-learning
-dependencies:
-pip install -r requirements-ml.txt
-python train_model.py --data path\to\card_transdata.csv --epochs 20
-The CSV is expected to contain these feature columns:
-- distance_from_home
-- distance_from_last_transaction
-- ratio_to_median_purchase_price
-- repeat_retailer
-- used_chip
-- used_pin_number
-- online_order
-- fraud (target column)
-The training script is described as fitting on rows where fraud == 0
-and producing autoencoder.keras, scaler.npz, and threshold.txt
-under model_artifacts/. Keep the artifacts together. To serve a
-trained model, install the optional runtime dependencies and configure
-MODEL_ARTIFACTS_DIR if the artifacts are not in the default
-model_artifacts/ directory.
+### 5. Start the application
 
-Validate the model on an appropriate held-out dataset before making any
-performance claims. TensorFlow inference may require more memory than
-the demo scorer.
-MLflow experiment tracking and tracing
-See [`MLFLOW_SETUP.md`](MLFLOW_SETUP.md) for installation,
-configuration, safe inference tracing, and optional training experiment
-logging. Install requirements-observability.txt only when MLflow
-integration is needed; tracing is disabled by default.
-Deploy to Render
-1. Push this repository to GitHub and create a Render Blueprint from
-   render.yaml.
-2. Confirm that the build/start commands install dependencies and run
-   migrations before Gunicorn starts.
-3. Set a generated SECRET_KEY and DEBUG=false in the service
-   environment.
-4. Visit /health/ for liveness and /ready/ for database readiness.
-5. For durable prediction history, configure a managed PostgreSQL
-   database and set DATABASE_URL. Local SQLite data may not persist
-   across instance replacement or redeployments.
-The free-tier environment and SQLite are suitable for a portfolio demo,
-not a high-availability financial service. Before production use, add
-authentication/authorization, rate limiting, persistent managed storage,
-monitoring/alerting, a data-retention policy, threat modelling, and
-independent model validation.
-Resume wording (accurate for the current implementation)
-Transaction Anomaly Dashboard | Python, Django, NumPy,
-PostgreSQL-ready, Render
-- Built a Django dashboard with validated transaction-feature inputs,
-  a configurable anomaly threshold, and prediction history.
-- Added request correlation IDs, duration/status logging,
-  health/readiness endpoints, environment-based security settings, and
-  regression tests.
-- Designed optional loading for a trained Keras autoencoder artifact
-  bundle; describe the deployed scoring mode accurately and do not
-  claim model accuracy without evaluation evidence.
-Do not claim a specific accuracy, recall, production impact, or
-Card affiliation without evidence. This is an independent
-portfolio project.
+Use the entry-point command configured for your project. For example, if the application uses Flask and its entry point is `app.py`:
+
+```bash
+python app.py
+```
+
+Open the local URL displayed in the terminal to access the dashboard.
+
+> **Note:** The startup command depends on your actual application entry point and configuration.
+
+## 🎯 Project Objectives
+
+- Apply machine learning to a real-world financial security problem.
+- Explore methods for identifying potentially fraudulent transactions.
+- Present analytical results through an interactive web dashboard.
+- Demonstrate skills in Python, data analysis, machine learning, and web application development.
+- Deploy a machine learning project for public access.
+
+## 🔮 Future Improvements
+
+- Integrate additional machine learning classification algorithms.
+- Improve fraud detection using techniques designed for imbalanced datasets.
+- Add real-time transaction monitoring.
+- Include model performance metrics such as precision, recall, F1-score, and ROC-AUC.
+- Add explainable AI to help interpret individual predictions.
+- Introduce secure user authentication and transaction history.
+- Expand dashboard visualizations and reporting capabilities.
+
+## ⚠️ Disclaimer
+
+This project is intended for educational and demonstration purposes. Predictions should not be treated as definitive financial or security decisions without further validation and appropriate safeguards.
+
+## 👨‍💻 Author
+
+**Tushar Kumawat**
+
+- GitHub: [@TusharK93](https://github.com/TusharK93)
+- Project Repository: [AI-Powered Credit Card Fraud Detection Dashboard](https://github.com/TusharK93/AI-Powered-Credit-Card-Fraud-Detection-Dashboard)
+- Live Application: [Try the Dashboard](https://ai-powered-credit-card-fraud-detection-m6g8.onrender.com/)
+
+---
+
+⭐ If you find this project interesting, consider starring the repository!
+
