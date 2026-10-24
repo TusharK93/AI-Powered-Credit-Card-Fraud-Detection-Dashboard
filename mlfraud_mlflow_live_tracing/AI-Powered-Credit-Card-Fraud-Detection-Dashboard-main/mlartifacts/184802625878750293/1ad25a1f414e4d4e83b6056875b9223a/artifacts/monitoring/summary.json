@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-10-24T12:21:31.908343+00:00",
+  "run_id": "1ad25a1f414e4d4e83b6056875b9223a",
+  "scorer_mode": "heuristic_demo",
+  "predictions_total": 1,
+  "flagged_total": 1,
+  "flagged_rate": 1.0,
+  "scoring_errors_total": 0,
+  "issues": {},
+  "dropped_events": 0,
+  "window_size": 1,
+  "score": {
+    "mean": 0.7600000000000001,
+    "p50": 0.7600000000000001,
+    "p95": 0.7600000000000001,
+    "max": 0.7600000000000001
+  },
+  "latency_ms": {
+    "mean": 18.651999999747204,
+    "p50": 18.651999999747204,
+    "p95": 18.651999999747204,
+    "p99": 18.651999999747204,
+    "max": 18.651999999747204
+  },
+  "score_histogram": {
+    "bin_edges": [
+      0.26,
+      0.36,
+      0.46,
+      0.56,
+      0.66,
+      0.76,
+      0.86,
+      0.96,
+      1.06,
+      1.16,
+      1.26
+    ],
+    "counts": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "privacy_note": "Aggregates only; no raw transaction feature values are stored."
+}
