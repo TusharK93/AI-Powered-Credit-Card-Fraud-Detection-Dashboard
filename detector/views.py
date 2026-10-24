@@ -18,6 +18,10 @@ def health(request):
     return JsonResponse({"status": "ok"}, status=200)
 
 
+def ready(request):
+    return JsonResponse({"status": "ready"}, status=200)
+
+
 def dashboard(request):
     result = None
     form = TransactionForm(request.POST or None)
