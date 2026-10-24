@@ -1,0 +1,60 @@
+services:
+  # ---------------------------------------------------------------- Django dashboard
+  - type: web
+    name: autoencoder-fraud-dashboard
+    runtime: python
+    # requirements-observability.txt includes requirements.txt AND installs mlflow.
+    buildCommand: pip install -r requirements-observability.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate --noinput && gunicorn fraud_dashboard.wsgi:application --workers 1 --threads 2 --timeout 60
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DEMO_ANOMALY_THRESHOLD
+        value: "0.50"
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      # --- MLflow (set the sync:false values in the Render dashboard) ---
+      - key: MLFLOW_TRACING_ENABLED
+        value: "true"
+      - key: MLFLOW_TRACKING_URI          # e.g. https://mlflow-tracking-server.onrender.com
+        sync: false
+      - key: MLFLOW_TRACKING_USERNAME     # admin (or the user you created)
+        sync: false
+      - key: MLFLOW_TRACKING_PASSWORD
+        sync: false
+      - key: MLFLOW_EXPERIMENT_NAME
+        value: fraud-detection-inference
+      - key: OBSERVABILITY_STATUS_TOKEN   # protects /observability/status/
+        generateValue: true
+
+  # ---------------------------------------------------------------- MLflow server
+  # Needs a Postgres database (create it in Render, same region, and paste its INTERNAL
+  # connection string into MLFLOW_BACKEND_STORE_URI). The disk keeps artifacts across
+  # redeploys; disks need a paid instance type. See MLFLOW_SETUP.md.
+  - type: web
+    name: mlflow-tracking-server
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./mlflow_server/Dockerfile
+    dockerContext: ./mlflow_server
+    healthCheckPath: /health
+    disk:
+      name: mlflow-artifacts
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: MLFLOW_BACKEND_STORE_URI
+        sync: false
+      - key: MLFLOW_ADMIN_USERNAME
+        value: admin
+      - key: MLFLOW_ADMIN_PASSWORD        # letters and digits only; same value as MLFLOW_TRACKING_PASSWORD above
+        sync: false
+      - key: MLFLOW_ARTIFACTS_DESTINATION
+        value: /data/artifacts

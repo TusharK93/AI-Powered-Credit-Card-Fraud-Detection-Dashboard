@@ -1,0 +1,4 @@
+# Optional MLflow experiment tracking and inference tracing.
+# Install after requirements.txt in the runtime environment.
+-r requirements.txt
+mlflow==2.22.4
