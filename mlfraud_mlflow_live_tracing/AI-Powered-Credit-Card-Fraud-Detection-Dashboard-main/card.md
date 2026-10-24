@@ -13,7 +13,7 @@ AI/ML and Data Science practitioner with project experience in machine learning,
 ## SELECTED PROJECTS
 
 ### Transaction Anomaly Dashboard
-*Python, Django, NumPy, PostgreSQL-ready, Render*
+*Python, Django, umPy, PostgreSQL-ready, Render*
 - Built a Django dashboard with validated transaction-feature inputs, configurable anomaly threshold, and minimal prediction history.
 - Added request correlation IDs, request-duration/status logging, liveness/readiness endpoints, environment-driven security settings, and regression tests.
 - Designed optional lazy loading for a trained Keras autoencoder artifact bundle; current deployed fallback is a heuristic demo, not a validated fraud model.
