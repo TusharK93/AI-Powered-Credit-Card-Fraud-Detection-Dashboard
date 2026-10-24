@@ -15,6 +15,7 @@
 </style>
 </head>
 <body><main class="wrap">
+<<<<<<< HEAD
 <nav class="nav"><div class="brand">◈ <span>Signal</span> / anomaly lab</div><div class="pill">TRANSACTION ANOMALY DEMO · DJANGO</div></nav>
 <section class="hero"><div class="eyebrow">ML project · transaction monitoring</div><h1>Spot the unusual.<br><span style="color:var(--mint)">Explain the signal.</span></h1><p>A lightweight transaction-anomaly portfolio demo. Submit feature values, inspect the score, and compare it with a configurable review threshold.</p></section>
 <section class="stats">
@@ -24,11 +25,23 @@
 </section>
 <div class="layout">
 <section class="panel"><h2>Test a transaction</h2><p class="sub">Enter seven transaction features for a demonstration score.</p>
+=======
+<nav class="nav"><div class="brand">◈ <span>Signal</span> / anomaly lab</div><div class="pill">AUTOENCODER · DJANGO</div></nav>
+<section class="hero"><div class="eyebrow">ML project · transaction monitoring</div><h1>Spot the unusual.<br><span style="color:var(--mint)">Explain the signal.</span></h1><p>A web interface for an autoencoder-based anomaly detection experiment. Submit transaction features, inspect reconstruction error, and compare it with the configured threshold.</p></section>
+<section class="stats">
+<div class="stat"><small>Transactions scored</small><strong>{{ total }}</strong></div>
+<div class="stat"><small>Flagged for review</small><strong>{{ flagged_count }}</strong></div>
+<div class="stat"><small>Detection approach</small><strong style="font-size:20px">Reconstruction error</strong></div>
+</section>
+<div class="layout">
+<section class="panel"><h2>Test a transaction</h2><p class="sub">Enter the seven features used by the notebook's dataset.</p>
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
 <form method="post">{% csrf_token %}
 <div class="fields">{% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.errors %}<small style="color:var(--red)">{{ field.errors|striptags }}</small>{% endif %}</div>{% endfor %}</div>
 <button type="submit">Score transaction →</button></form>
 {% if result %}<div class="result {% if result.flagged %}alert{% else %}safe{% endif %}">
 <div class="status">{% if result.flagged %}⚠ Flagged for review{% else %}✓ Below anomaly threshold{% endif %}</div>
+<<<<<<< HEAD
 <p class="muted">Anomaly score: <b>{{ result.score|floatformat:5 }}</b></p><div class="bar"><span style="width:{% if result.flagged %}100{% else %}45{% endif %}%"></span></div>
 <p class="muted">Configured threshold: <b>{{ result.threshold|floatformat:5 }}</b></p>
 <p class="muted">Scoring mode: <b>{{ result.mode }}</b></p>
@@ -43,4 +56,20 @@
 {% for row in recent %}<div class="item"><span>{{ row.created_at|date:"d M, H:i" }}<br><small class="muted">Score {{ row.score|floatformat:4 }}</small></span><span class="tag {% if row.flagged %}bad{% endif %}">{% if row.flagged %}Review{% else %}Normal{% endif %}</span></div>{% empty %}<p class="muted">No predictions yet. Submit a sample to populate this list.</p>{% endfor %}
 </section></aside></div>
 <footer>Portfolio demo only · Heuristic score unless a trained artifact bundle is configured · Not for real financial decisions · Not affiliated with Mastercard.</footer>
+=======
+<p class="muted">Reconstruction error: <b>{{ result.error|floatformat:5 }}</b></p><div class="bar"><span style="width:{% if result.flagged %}100{% else %}45{% endif %}%"></span></div>
+<p class="muted">Configured threshold: <b>{{ result.threshold|floatformat:5 }}</b></p>
+<p class="muted">Model mode: <b>{{ result.mode }}</b></p>
+</div><p class="notice">A flag is only a model signal, not proof of fraud. Do not use demo mode to approve, decline, or make real financial decisions.</p>{% endif %}
+</section>
+<aside>
+<section class="panel"><h2>How the model works</h2><p class="sub">Based on your uploaded notebook's reconstruction approach.</p>
+<div class="item"><span>01 · Learn normal patterns</span><span class="tag">Train</span></div><div class="item"><span>02 · Reconstruct input features</span><span class="tag">Predict</span></div><div class="item"><span>03 · Measure mean absolute error</span><span class="tag">Score</span></div><div class="item"><span>04 · Compare against threshold</span><span class="tag">Review</span></div>
+<p class="muted" style="font-size:13px;margin-top:17px">The notebook trains on genuine transactions and flags records with reconstruction error above a threshold. This UI keeps the same basic scoring idea.</p>
+</section>
+<section class="panel recent"><h2>Recent predictions</h2><p class="sub">Latest submitted examples</p>
+{% for row in recent %}<div class="item"><span>{{ row.created_at|date:"d M, H:i" }}<br><small class="muted">Error {{ row.reconstruction_error|floatformat:4 }}</small></span><span class="tag {% if row.flagged %}bad{% endif %}">{% if row.flagged %}Review{% else %}Normal{% endif %}</span></div>{% empty %}<p class="muted">No predictions yet. Submit a sample to populate this list.</p>{% endfor %}
+</section></aside></div>
+<footer>Portfolio demonstration only · Synthetic demo model unless a trained artifact bundle is supplied · Not affiliated with Mastercard.</footer>
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
 </main></body></html>

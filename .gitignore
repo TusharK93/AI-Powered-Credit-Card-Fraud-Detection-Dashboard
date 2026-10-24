@@ -40,3 +40,10 @@ htmlcov/
 # IMPORTANT:
 # Do not ignore model_artifacts/ if Render needs
 # your saved trained model from this directory.
+.venv/
+.venv_clean/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.env

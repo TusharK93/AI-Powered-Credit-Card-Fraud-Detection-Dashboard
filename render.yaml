@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # FREE-tier Blueprint: dashboard + MLflow server + free Postgres. No paid plan, no disk.
 # Limits: free services sleep after 15 min idle; free Postgres expires after 30 days;
 # MLflow artifacts/trace payloads live on an ephemeral filesystem (metrics are kept in Postgres).
@@ -9,6 +10,10 @@ databases:
 
 services:
   # ---------------------------------------------------------------- Django dashboard
+=======
+
+services:
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
   - type: web
     name: autoencoder-fraud-dashboard
     runtime: python
@@ -22,6 +27,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DEBUG
+<<<<<<< HEAD
         value: "false"
       - key: LOG_LEVEL
         value: INFO
@@ -63,3 +69,12 @@ services:
         value: /tmp/mlflow-artifacts
       - key: MLFLOW_WORKERS               # 512 MB RAM: keep at 1
         value: "1"
+=======
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: MLFLOW_TRACING_ENABLED
+        value: "true"
+      - key: MLFLOW_EXPERIMENT_NAME
+        value: fraud-detection-inference
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc

@@ -1,15 +1,19 @@
-<<<<<<< HEAD
+
 """HTTP views for the transaction anomaly dashboard and operational probes."""
+
 import hmac
 import logging
 import os
+
 from django.db import DatabaseError, connection
 from django.http import Http404, JsonResponse
 from django.shortcuts import render
+
 from .forms import TransactionForm
 from .models import PredictionLog
-from .services import ScoringError, score_transaction
 from .observability import get_status, record_issue, trace_scoring, warm_up
+from .services import ScoringError, score_transaction
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,77 +21,93 @@ logger = logging.getLogger(__name__)
 def dashboard(request):
     result = None
     form = TransactionForm(request.POST or None)
+
     if request.method == "POST" and form.is_valid():
         values = form.cleaned_data.copy()
-        for key in ("repeat_retailer", "used_chip", "used_pin_number", "online_order"):
+
+        for key in (
+            "repeat_retailer",
+            "used_chip",
+            "used_pin_number",
+            "online_order",
+        ):
             values[key] = int(values[key])
+
         try:
             result = trace_scoring(
-                values, score_transaction, request_id=getattr(request, "request_id", None)
+                values,
+                score_transaction,
+                request_id=getattr(request, "request_id", None),
             )
+
             PredictionLog.objects.create(
                 score=result["score"],
-=======
-from django.http import JsonResponse
-from django.shortcuts import render
-from .forms import TransactionForm
-from .models import PredictionLog
-from .services import score_transaction
-
-def dashboard(request):
-    result = None
-    if request.method == "POST":
-        form = TransactionForm(request.POST)
-        if form.is_valid():
-            values = form.cleaned_data.copy()
-            for key in ("repeat_retailer", "used_chip", "used_pin_number", "online_order"):
-                values[key] = int(values[key])
-            result = score_transaction(values)
-            PredictionLog.objects.create(
-                reconstruction_error=result["error"],
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
                 threshold=result["threshold"],
                 flagged=result["flagged"],
                 mode=result["mode"],
             )
-<<<<<<< HEAD
+
         except (ScoringError, ValueError):
-            logger.exception("transaction_scoring_failed request_id=%s", getattr(request, "request_id", "unknown"))
-            form.add_error(None, "Scoring is temporarily unavailable. Please try again later.")
+            logger.exception(
+                "transaction_scoring_failed request_id=%s",
+                getattr(request, "request_id", "unknown"),
+            )
+            form.add_error(
+                None,
+                "Scoring is temporarily unavailable. Please try again later.",
+            )
             result = None
+
         except DatabaseError:
-            logger.exception("prediction_history_write_failed request_id=%s", getattr(request, "request_id", "unknown"))
+            logger.exception(
+                "prediction_history_write_failed request_id=%s",
+                getattr(request, "request_id", "unknown"),
+            )
             record_issue("prediction_history_write_failed")
-            form.add_error(None, "The score was calculated, but prediction history could not be saved.")
+            form.add_error(
+                None,
+                "The score was calculated, but prediction history could not be saved.",
+            )
 
     try:
         recent = PredictionLog.objects.order_by("-created_at")[:6]
         total = PredictionLog.objects.count()
         flagged_count = PredictionLog.objects.filter(flagged=True).count()
+
     except DatabaseError:
-        logger.exception("prediction_history_unavailable request_id=%s", getattr(request, "request_id", "unknown"))
+        logger.exception(
+            "prediction_history_unavailable request_id=%s",
+            getattr(request, "request_id", "unknown"),
+        )
         record_issue("prediction_history_unavailable")
         recent, total, flagged_count = [], 0, 0
-        form.add_error(None, "Prediction history is temporarily unavailable.")
+        form.add_error(
+            None,
+            "Prediction history is temporarily unavailable.",
+        )
 
-=======
-    else:
-        form = TransactionForm()
-    recent = PredictionLog.objects.order_by("-created_at")[:6]
-    total = PredictionLog.objects.count()
-    flagged_count = PredictionLog.objects.filter(flagged=True).count()
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
-    return render(request, "detector/dashboard.html", {
-        "form": form, "result": result, "recent": recent,
-        "total": total, "flagged_count": flagged_count,
-    })
+    return render(
+        request,
+        "detector/dashboard.html",
+        {
+            "form": form,
+            "result": result,
+            "recent": recent,
+            "total": total,
+            "flagged_count": flagged_count,
+        },
+    )
 
-<<<<<<< HEAD
 
 def health(request):
     """Liveness probe: confirms the Django process can answer HTTP requests."""
-    warm_up()  # no-op unless MLflow tracing is enabled; connects in a background thread
-    return JsonResponse({"status": "ok", "service": "transaction-anomaly-dashboard"})
+    warm_up()
+    return JsonResponse(
+        {
+            "status": "ok",
+            "service": "transaction-anomaly-dashboard",
+        }
+    )
 
 
 def ready(request):
@@ -97,23 +117,43 @@ def ready(request):
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
+
     except DatabaseError:
-        logger.exception("readiness_check_failed request_id=%s", getattr(request, "request_id", "unknown"))
-        return JsonResponse({"status": "not_ready", "checks": {"database": "failed"}}, status=503)
-    return JsonResponse({"status": "ready", "checks": {"database": "ok"}})
+        logger.exception(
+            "readiness_check_failed request_id=%s",
+            getattr(request, "request_id", "unknown"),
+        )
+        return JsonResponse(
+            {
+                "status": "not_ready",
+                "checks": {"database": "failed"},
+            },
+            status=503,
+        )
+
+    return JsonResponse(
+        {
+            "status": "ready",
+            "checks": {"database": "ok"},
+        }
+    )
 
 
 def observability_status(request):
-    """MLflow connection diagnostics. Hidden (404) unless OBSERVABILITY_STATUS_TOKEN is set and sent.
+    """Return observability diagnostics only when a configured token is supplied.
 
-    Send the token in the X-Status-Token header (preferred) or ?token=... .
+    Supply the token in the X-Status-Token header (preferred) or ?token=...
     """
     expected = os.environ.get("OBSERVABILITY_STATUS_TOKEN", "").strip()
-    supplied = request.headers.get("X-Status-Token") or request.GET.get("token", "")
-    if not expected or not hmac.compare_digest(supplied.encode(), expected.encode()):
+    supplied = (
+        request.headers.get("X-Status-Token")
+        or request.GET.get("token", "")
+    )
+
+    if not expected or not hmac.compare_digest(
+        supplied.encode(),
+        expected.encode(),
+    ):
         raise Http404
+
     return JsonResponse(get_status())
-=======
-def health(request):
-    return JsonResponse({"status": "ok", "service": "autoencoder-fraud-dashboard"})
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc

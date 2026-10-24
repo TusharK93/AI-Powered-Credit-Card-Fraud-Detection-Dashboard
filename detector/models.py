@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 """Minimal operational history for demo scoring events; no raw inputs are stored."""
 from django.db import models
 
@@ -17,7 +17,7 @@ class PredictionLog(models.Model):
     def __str__(self):
         outcome = "flagged" if self.flagged else "not flagged"
         return f"{self.created_at:%Y-%m-%d %H:%M} - {outcome}"
-=======
+
 from django.db import models
 class PredictionLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,4 +27,4 @@ class PredictionLog(models.Model):
     mode = models.CharField(max_length=30, default="demo")
     def __str__(self):
         return f"{self.created_at:%Y-%m-%d %H:%M} - {'flagged' if self.flagged else 'normal'}"
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
+

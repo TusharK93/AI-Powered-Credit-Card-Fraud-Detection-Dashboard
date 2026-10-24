@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 """Transaction scoring service with lazy optional autoencoder loading.
 
 Without a complete trained artifact bundle, the service uses a transparent,
@@ -13,7 +13,7 @@ import numpy as np
 from .config import get_demo_threshold
 
 logger = logging.getLogger(__name__)
-=======
+
 
 """Lightweight anomaly scoring for the demo dashboard.
 
@@ -22,7 +22,7 @@ Do not use it for real financial decisions.
 """
 import numpy as np
 
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
+
 FEATURES = [
     "distance_from_home",
     "distance_from_last_transaction",
@@ -32,7 +32,7 @@ FEATURES = [
     "used_pin_number",
     "online_order",
 ]
-<<<<<<< HEAD
+
 BINARY_FEATURES = {"repeat_retailer", "used_chip", "used_pin_number", "online_order"}
 ARTIFACTS = Path(os.environ.get(
     "MODEL_ARTIFACTS_DIR", str(Path(__file__).resolve().parent.parent / "model_artifacts")
@@ -144,7 +144,6 @@ def score_transaction(values) -> dict:
     }
     logger.info("transaction_scored mode=%s flagged=%s score=%.5f", mode, result["flagged"], score)
     return result
-=======
 
 
 def score_transaction(values):
@@ -177,4 +176,4 @@ def score_transaction(values):
         "mode": "heuristic demo (not a trained model)",
         "features": FEATURES,
     }
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
+

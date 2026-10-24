@@ -1,11 +1,11 @@
-<<<<<<< HEAD
+
 FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1
 RUN pip install --no-cache-dir "mlflow[auth]==2.22.4" "psycopg2-binary>=2.9"
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-=======
+
 
 FROM python:3.11-slim
 
@@ -26,4 +26,3 @@ RUN python -c "from pathlib import Path; p=Path('/app/entrypoint.sh'); b=p.read_
 EXPOSE 10000
 
 CMD ["/bin/sh", "/app/entrypoint.sh"]
->>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
