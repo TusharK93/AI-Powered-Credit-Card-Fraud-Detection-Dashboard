@@ -1,5 +1,5 @@
 """Non-blocking MLflow observability for transaction scoring.
-
+ 
 What gets recorded when MLFLOW_TRACING_ENABLED=true
 ---------------------------------------------------
 * **Traces** (live, per request): one span per scoring call with safe metadata only
@@ -11,7 +11,7 @@ What gets recorded when MLFLOW_TRACING_ENABLED=true
 * **Artifacts**: a monitoring summary (JSON: totals, flag rate, score/latency
   percentiles, score histogram) is re-uploaded every N predictions / M seconds and once
   more on shutdown.
-
+ 
 Design rules
 ------------
 * A request thread never waits for MLflow. The only work done on the request path is
@@ -23,7 +23,7 @@ Design rules
 * get_status() reports exactly why the connection is not working.
 """
 from __future__ import annotations
-
+ 
 import atexit
 import logging
 import math
@@ -35,17 +35,17 @@ import time
 from collections import deque
 from datetime import datetime, timezone
 from urllib.parse import urlsplit, urlunsplit
-
+ 
 logger = logging.getLogger("detector.observability")
-
+ 
 TRUTHY = {"1", "true", "yes", "on"}
 DEFAULT_URI = "http://127.0.0.1:5000"
 DEFAULT_EXPERIMENT = "fraud-detection-inference"
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0", "::1"}
 SPAN_NAME = "detector.score_transaction"
 POLL_SECONDS = 0.5
-
-
+ 
+ 
 # --------------------------------------------------------------------------- helpers
 def _env_int(name: str, default: int) -> int:
     raw = os.environ.get(name)
@@ -56,16 +56,16 @@ def _env_int(name: str, default: int) -> int:
     except ValueError:
         logger.warning("invalid_env_int name=%s value=%r using_default=%s", name, raw, default)
         return default
-
-
+ 
+ 
 def tracing_enabled() -> bool:
     return os.environ.get("MLFLOW_TRACING_ENABLED", "false").strip().lower() in TRUTHY
-
-
+ 
+ 
 def tracking_uri() -> str:
     return os.environ.get("MLFLOW_TRACKING_URI", "").strip() or DEFAULT_URI
-
-
+ 
+ 
 def redact_uri(uri: str) -> str:
     """Return scheme://host:port/path without any user:password part or query string."""
     try:
@@ -76,36 +76,36 @@ def redact_uri(uri: str) -> str:
         return urlunsplit((parts.scheme, host, parts.path, "", ""))
     except ValueError:
         return "<invalid MLFLOW_TRACKING_URI>"
-
-
+ 
+ 
 def _scrub(text: str) -> str:
     for name in ("MLFLOW_TRACKING_PASSWORD", "MLFLOW_TRACKING_TOKEN"):
         secret = os.environ.get(name, "")
         if secret:
             text = text.replace(secret, "***")
     return text
-
-
+ 
+ 
 def _basic_auth():
     user = os.environ.get("MLFLOW_TRACKING_USERNAME", "")
     password = os.environ.get("MLFLOW_TRACKING_PASSWORD", "")
     return (user, password) if user and password else None
-
-
+ 
+ 
 def apply_client_timeouts() -> None:
     """Fail fast instead of letting MLflow retry for minutes (set before using MLflow)."""
     os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "10")
     os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "2")
     os.environ.setdefault("MLFLOW_HTTP_REQUEST_BACKOFF_FACTOR", "1")
     os.environ.setdefault("MLFLOW_ENABLE_ASYNC_TRACE_LOGGING", "true")
-
-
+ 
+ 
 def probe_tracking_server(uri: str, timeout=(3.0, 8.0)) -> None:
     """Raise RuntimeError with a human-readable reason if an http(s) MLflow server is unusable."""
     if not uri.lower().startswith(("http://", "https://")):
         return  # file:, sqlite:, databricks: ... cannot be probed over HTTP
     import requests
-
+ 
     safe = redact_uri(uri)
     try:
         response = requests.get(uri.rstrip("/") + "/health", timeout=timeout, auth=_basic_auth())
@@ -119,28 +119,30 @@ def probe_tracking_server(uri: str, timeout=(3.0, 8.0)) -> None:
             f"MLflow server at {safe} rejected the credentials (HTTP {response.status_code}). "
             "Check MLFLOW_TRACKING_USERNAME / MLFLOW_TRACKING_PASSWORD."
         )
+    if response.status_code == 404:
+        return  # hosted servers (e.g. DagsHub) have no /health route; real calls will report any problem
     if response.status_code >= 400:
         raise RuntimeError(
             f"MLflow server at {safe} answered HTTP {response.status_code} for /health. "
             "Check MLFLOW_TRACKING_URI (it must be the server root, without a path)."
         )
-
-
+ 
+ 
 def _finite(value):
     try:
         number = float(value)
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
-
-
+ 
+ 
 def _percentile(sorted_values, pct):
     if not sorted_values:
         return None
     index = min(len(sorted_values) - 1, max(0, int(round(pct / 100 * (len(sorted_values) - 1)))))
     return sorted_values[index]
-
-
+ 
+ 
 def _run_tags() -> dict:
     return {
         "purpose": "inference-monitoring",
@@ -150,19 +152,19 @@ def _run_tags() -> dict:
         "pid": str(os.getpid()),
         "python": platform.python_version(),
     }
-
-
+ 
+ 
 # --------------------------------------------------------------------------- reporter
 class _Reporter:
     """Background worker that owns the MLflow client, the monitoring run and all uploads."""
-
+ 
     def __init__(self, max_queue: int = 2000):
         self._lock = threading.Lock()
         self._max_queue = max_queue
         self._thread = None
         self._pid = None
         self._init_state()
-
+ 
     def _init_state(self):
         self._queue = queue.Queue(maxsize=self._max_queue)
         self._stop = threading.Event()
@@ -190,7 +192,7 @@ class _Reporter:
         self._last_artifact_mono = time.monotonic()
         self._mode = None
         self._feature_params_logged = False
-
+ 
     # ---- lifecycle -------------------------------------------------------------
     def ensure_started(self):
         pid = os.getpid()
@@ -203,14 +205,14 @@ class _Reporter:
             self._pid = pid
             self._thread = threading.Thread(target=self._run, name="mlflow-reporter", daemon=True)
             self._thread.start()
-
+ 
     def shutdown(self, timeout: float = 8.0):
         thread = self._thread
         if thread is None or not thread.is_alive() or self._pid != os.getpid():
             return
         self._stop.set()
         thread.join(timeout)
-
+ 
     def submit(self, event: dict):
         """Queue an event for the worker. Never blocks and never raises."""
         try:
@@ -220,7 +222,7 @@ class _Reporter:
             self.dropped += 1
         except Exception:
             logger.exception("mlflow_event_submit_failed")
-
+ 
     # ---- worker loop -----------------------------------------------------------
     def _run(self):
         reconnect_seconds = max(5, _env_int("MLFLOW_RECONNECT_SECONDS", 30))
@@ -239,7 +241,7 @@ class _Reporter:
         except Exception:
             logger.exception("mlflow_reporter_crashed")
             self.ready.clear()
-
+ 
     def _collect_batch(self):
         batch = []
         try:
@@ -252,7 +254,7 @@ class _Reporter:
             except queue.Empty:
                 break
         return batch
-
+ 
     def _discard_pending(self):
         discarded = 0
         while True:
@@ -262,7 +264,7 @@ class _Reporter:
             except queue.Empty:
                 break
         self.dropped += discarded
-
+ 
     # ---- connection ------------------------------------------------------------
     def _connect(self) -> bool:
         uri = tracking_uri()
@@ -279,7 +281,7 @@ class _Reporter:
             import mlflow
             from mlflow.entities import Metric, Param
             from mlflow.tracking import MlflowClient
-
+ 
             mlflow.set_tracking_uri(uri)
             experiment_name = os.environ.get("MLFLOW_EXPERIMENT_NAME", DEFAULT_EXPERIMENT)
             experiment = mlflow.set_experiment(experiment_name)
@@ -316,7 +318,7 @@ class _Reporter:
         except Exception as exc:
             self._record_connect_failure(safe, str(exc) or type(exc).__name__, exc)
         return False
-
+ 
     def _record_connect_failure(self, safe_uri, message, exc):
         self._connect_failures += 1
         self.last_error = _scrub(f"{message} [{type(exc).__name__}]")[:500]
@@ -326,12 +328,12 @@ class _Reporter:
         else:
             logger.warning("mlflow_connect_failed uri=%s attempt=%s reason=%s",
                            safe_uri, self._connect_failures, self.last_error)
-
+ 
     # ---- event handling --------------------------------------------------------
     def _metric(self, key, value, ts, step):
         number = _finite(value)
         return None if number is None else self._types[0](key, number, ts, step)
-
+ 
     def _handle(self, batch):
         metrics = []
         now_ms = int(time.time() * 1000)
@@ -391,7 +393,7 @@ class _Reporter:
             self.last_error_at = datetime.now(timezone.utc).isoformat()
             if self._batch_failures >= 3:
                 self.ready.clear()  # force a full reconnect (probe + set_experiment)
-
+ 
     def _sync_mode_and_features(self, event):
         try:
             mode = event.get("mode")
@@ -408,11 +410,11 @@ class _Reporter:
         except Exception:
             self._feature_params_logged = True  # params are immutable; do not retry forever
             logger.exception("mlflow_tag_or_param_failed run_id=%s", self.run_id)
-
+ 
     # ---- artifacts -------------------------------------------------------------
     def _summary(self) -> dict:
         import numpy as np
-
+ 
         scores = sorted(self._scores)
         latencies = sorted(self._latencies)
         histogram = None
@@ -440,7 +442,7 @@ class _Reporter:
             "score_histogram": histogram,
             "privacy_note": "Aggregates only; no raw transaction feature values are stored.",
         }
-
+ 
     def _maybe_artifact(self, force: bool = False):
         if not self.ready.is_set() or self._since_artifact == 0:
             return
@@ -461,7 +463,7 @@ class _Reporter:
             logger.exception(
                 "mlflow_artifact_upload_failed run_id=%s hint='start the MLflow server with "
                 "--serve-artifacts and a writable --artifacts-destination'", self.run_id)
-
+ 
     def _final_flush(self):
         if not self.ready.is_set():
             self._discard_pending()
@@ -481,7 +483,7 @@ class _Reporter:
         except Exception:
             logger.exception("mlflow_run_terminate_failed run_id=%s", self.run_id)
         self.ready.clear()
-
+ 
     # ---- introspection ---------------------------------------------------------
     def status(self) -> dict:
         return {
@@ -501,18 +503,18 @@ class _Reporter:
             "last_artifact_error": self.last_artifact_error,
             "pid": os.getpid(),
         }
-
-
+ 
+ 
 _reporter = _Reporter()
 atexit.register(lambda: _reporter.shutdown())
-
-
+ 
+ 
 # --------------------------------------------------------------------------- spans
 def _open_span(values, request_id):
     """Open an MLflow span; return (context_manager, span) or (None, None) on any failure."""
     try:
         import mlflow
-
+ 
         cm = mlflow.start_span(name=SPAN_NAME, span_type="CHAIN")
         span = cm.__enter__()
     except Exception:
@@ -530,8 +532,8 @@ def _open_span(values, request_id):
     except Exception:
         logger.exception("mlflow_span_annotate_failed")
     return cm, span
-
-
+ 
+ 
 def _close_span(cm, span, result=None, latency_ms=None, exc=None):
     if cm is None:
         return
@@ -554,21 +556,21 @@ def _close_span(cm, span, result=None, latency_ms=None, exc=None):
     except BaseException as inner:  # MLflow re-raises the traced exception; that is expected
         if inner is not exc:
             logger.exception("mlflow_span_close_failed")
-
-
+ 
+ 
 # --------------------------------------------------------------------------- public API
 def trace_scoring(values, scorer, request_id=None):
     """Run ``scorer(values)`` exactly once and record it in MLflow without ever affecting it."""
     if not tracing_enabled():
         return scorer(values)
-
+ 
     reporter = _reporter
     try:
         reporter.ensure_started()
     except Exception:
         logger.exception("mlflow_worker_start_failed")
     cm, span = _open_span(values, request_id) if reporter.ready.is_set() else (None, None)
-
+ 
     started = time.perf_counter()
     try:
         result = scorer(values)
@@ -580,7 +582,7 @@ def trace_scoring(values, scorer, request_id=None):
         logger.warning("scoring_failed_recorded error_type=%s request_id=%s",
                        type(exc).__name__, request_id or "unknown")
         raise
-
+ 
     latency_ms = (time.perf_counter() - started) * 1000
     _close_span(cm, span, result=result, latency_ms=latency_ms)
     try:
@@ -597,14 +599,14 @@ def trace_scoring(values, scorer, request_id=None):
     except Exception:
         logger.exception("mlflow_prediction_event_failed")
     return result
-
-
+ 
+ 
 def record_issue(name: str) -> None:
     """Count an operational problem (e.g. a database write failure) as an MLflow metric."""
     if tracing_enabled():
         _reporter.submit({"kind": "issue", "ts": int(time.time() * 1000), "name": name})
-
-
+ 
+ 
 def warm_up() -> None:
     """Start the background connection early (called from /health/ so it connects after deploy)."""
     if tracing_enabled():
@@ -612,8 +614,8 @@ def warm_up() -> None:
             _reporter.ensure_started()
         except Exception:
             logger.exception("mlflow_warm_up_failed")
-
-
+ 
+ 
 def get_status() -> dict:
     warm_up()
     return _reporter.status()
