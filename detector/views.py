@@ -1,4 +1,23 @@
 
+import logging
+
+from django.db import DatabaseError
+from django.http import JsonResponse
+from django.shortcuts import render
+
+from .forms import TransactionForm
+from .models import PredictionLog
+from .observability import record_issue, trace_scoring
+from .services import ScoringError, score_transaction
+
+logger = logging.getLogger(__name__)
+
+
+def health(request):
+    """Basic health endpoint for Render."""
+    return JsonResponse({"status": "ok"}, status=200)
+
+
 def dashboard(request):
     result = None
     form = TransactionForm(request.POST or None)
