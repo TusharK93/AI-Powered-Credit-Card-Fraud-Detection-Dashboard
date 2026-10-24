@@ -40,12 +40,12 @@ def dashboard(request):
                 request_id=getattr(request, "request_id", None),
             )
 
-            PredictionLog.objects.create(
-                score=result["score"],
-                threshold=result["threshold"],
-                flagged=result["flagged"],
-                mode=result["mode"],
-            )
+           PredictionLog.objects.create(
+            reconstruction_error=result["error"],
+            threshold=result["threshold"],
+            flagged=result["flagged"],
+            
+            mode=result["mode"])
 
         except (ScoringError, ValueError):
             logger.exception(
