@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """HTTP views for the transaction anomaly dashboard and operational probes."""
 import hmac
 import logging
@@ -26,10 +27,30 @@ def dashboard(request):
             )
             PredictionLog.objects.create(
                 score=result["score"],
+=======
+from django.http import JsonResponse
+from django.shortcuts import render
+from .forms import TransactionForm
+from .models import PredictionLog
+from .services import score_transaction
+
+def dashboard(request):
+    result = None
+    if request.method == "POST":
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            values = form.cleaned_data.copy()
+            for key in ("repeat_retailer", "used_chip", "used_pin_number", "online_order"):
+                values[key] = int(values[key])
+            result = score_transaction(values)
+            PredictionLog.objects.create(
+                reconstruction_error=result["error"],
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
                 threshold=result["threshold"],
                 flagged=result["flagged"],
                 mode=result["mode"],
             )
+<<<<<<< HEAD
         except (ScoringError, ValueError):
             logger.exception("transaction_scoring_failed request_id=%s", getattr(request, "request_id", "unknown"))
             form.add_error(None, "Scoring is temporarily unavailable. Please try again later.")
@@ -49,11 +70,19 @@ def dashboard(request):
         recent, total, flagged_count = [], 0, 0
         form.add_error(None, "Prediction history is temporarily unavailable.")
 
+=======
+    else:
+        form = TransactionForm()
+    recent = PredictionLog.objects.order_by("-created_at")[:6]
+    total = PredictionLog.objects.count()
+    flagged_count = PredictionLog.objects.filter(flagged=True).count()
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
     return render(request, "detector/dashboard.html", {
         "form": form, "result": result, "recent": recent,
         "total": total, "flagged_count": flagged_count,
     })
 
+<<<<<<< HEAD
 
 def health(request):
     """Liveness probe: confirms the Django process can answer HTTP requests."""
@@ -84,3 +113,7 @@ def observability_status(request):
     if not expected or not hmac.compare_digest(supplied.encode(), expected.encode()):
         raise Http404
     return JsonResponse(get_status())
+=======
+def health(request):
+    return JsonResponse({"status": "ok", "service": "autoencoder-fraud-dashboard"})
+>>>>>>> f339c19469c5a76f6e33e0968448b505cfb384cc
