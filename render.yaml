@@ -1,0 +1,22 @@
+
+services:
+  - type: web
+    name: autoencoder-fraud-dashboard
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-observability.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate --noinput && gunicorn fraud_dashboard.wsgi:application --workers 1 --threads 2 --timeout 60
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: MLFLOW_TRACING_ENABLED
+        value: "true"
+      - key: MLFLOW_EXPERIMENT_NAME
+        value: fraud-detection-inference
