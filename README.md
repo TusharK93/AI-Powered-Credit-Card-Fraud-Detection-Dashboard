@@ -34,9 +34,9 @@ The project demonstrates the practical application of **Artificial Intelligence,
 The exact libraries and versions should match the project's source code.
 
 - **Programming Language:** Python
-- **Machine Learning:** Scikit-learn (if used in the implementation)
-- **Data Processing:** Pandas, NumPy (if used)
-- **Web Framework:** Flask or Django, depending on the implementation
+- **Machine Learning:** Scikit-learn 
+- **Data Processing:** Pandas, NumPy 
+- **Web Framework:** Django, 
 - **Frontend:** HTML, CSS, JavaScript
 - **Deployment:** Render
 - **Version Control:** Git and GitHub
