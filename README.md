@@ -99,10 +99,10 @@ pip install -r requirements.txt
 
 ### 5. Start the application
 
-Use the entry-point command configured for your project. For example, if the application uses Flask and its entry point is `app.py`:
+Use the entry-point command configured for your project. For example, if the application uses Flask and its entry point is `python manage.py runserver`:
 
 ```bash
-python app.py
+python manage.py runserve
 ```
 
 Open the local URL displayed in the terminal to access the dashboard.
