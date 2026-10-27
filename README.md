@@ -142,5 +142,8 @@ This project is intended for educational and demonstration purposes. Predictions
 ---
 
 ⭐ If you find this project interesting, consider starring the repository!
+<p align="center">
+  <img src="credit card.png" alt="Credit Card end-to-end Project" width="100%">
+</p>
 
-](https://ai-powered-credit-card-fraud-detection-m6g8.onrender.com/)
+
